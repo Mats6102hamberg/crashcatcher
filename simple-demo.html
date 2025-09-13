@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #9ca3af;
+            font-size: 18px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(55, 65, 81, 0.8);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+        
+        .stat-card {
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 16px;
+        }
+        
+        .stat-red { background: rgba(239, 68, 68, 0.1); }
+        .stat-yellow { background: rgba(245, 158, 11, 0.1); }
+        .stat-green { background: rgba(34, 197, 94, 0.1); }
+        .stat-purple { background: rgba(168, 85, 247, 0.1); }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            margin-bottom: 8px;
+            color: #d1d5db;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            color: #10b981;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        
+        .code-block {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            color: #10b981;
+            overflow-x: auto;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        
+        .status-running {
+            background: rgba(34, 197, 94, 0.2);
+            color: #10b981;
+        }
+        
+        .status-stopped {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🛡️</div>
+            <h1 class="title">Security Monitor</h1>
+            <p class="subtitle">Säkerhetsövervakning och incident management</p>
+        </div>
+
+        <div class="grid">
+            <div class="card stat-card">
+                <div class="stat-icon stat-red">⚠️</div>
+                <div>
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Open Incidents</div>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="stat-icon stat-yellow">⏰</div>
+                <div>
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Investigating</div>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="stat-icon stat-green">✅</div>
+                <div>
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Resolved Today</div>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="stat-icon stat-purple">🚨</div>
+                <div>
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🚀 Projektöversikt</h2>
+            <div class="feature-grid">
+                <div>
+                    <h3 style="color: #60a5fa; margin-bottom: 12px;">Backend (FastAPI)</h3>
+                    <ul class="feature-list">
+                        <li>JWT Autentisering</li>
+                        <li>PostgreSQL databas</li>
+                        <li>REST API endpoints</li>
+                        <li>Log upload & analys</li>
+                        <li>Health monitoring</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 style="color: #34d399; margin-bottom: 12px;">Frontend (React)</h3>
+                    <ul class="feature-list">
+                        <li>Modern dashboard</li>
+                        <li>Incident management</li>
+                        <li>Real-time updates</li>
+                        <li>Responsive design</li>
+                        <li>File upload interface</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 style="color: #f87171; margin-bottom: 12px;">Watchdog (Python)</h3>
+                    <ul class="feature-list">
+                        <li>System monitoring</li>
+                        <li>Process detection</li>
+                        <li>Network scanning</li>
+                        <li>Auto incident creation</li>
+                        <li>Log file analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">📊 System Status</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div>
+                    <strong>Frontend:</strong>
+                    <span class="status status-running">RUNNING</span>
+                    <div style="font-size: 12px; color: #9ca3af;">Port 3000</div>
+                </div>
+                <div>
+                    <strong>Backend:</strong>
+                    <span class="status status-stopped">STOPPED</span>
+                    <div style="font-size: 12px; color: #9ca3af;">Kräver Docker</div>
+                </div>
+                <div>
+                    <strong>Database:</strong>
+                    <span class="status status-stopped">STOPPED</span>
+                    <div style="font-size: 12px; color: #9ca3af;">PostgreSQL</div>
+                </div>
+                <div>
+                    <strong>Watchdog:</strong>
+                    <span class="status status-stopped">STOPPED</span>
+                    <div style="font-size: 12px; color: #9ca3af;">Python service</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🛠️ Starta hela systemet</h2>
+            <p style="margin-bottom: 16px;">För att köra den fullständiga säkerhetsapplikationen:</p>
+            
+            <h3 style="color: #fbbf24; margin-bottom: 8px;">1. Installera Docker</h3>
+            <div class="code-block">brew install --cask docker</div>
+            
+            <h3 style="color: #fbbf24; margin-bottom: 8px;">2. Starta alla tjänster</h3>
+            <div class="code-block">cd /Users/admin/CrashCatcher/app-root
+docker compose up --build</div>
+            
+            <h3 style="color: #fbbf24; margin-bottom: 8px;">3. Åtkomst</h3>
+            <div style="background: #374151; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <div>🌐 <strong>Frontend:</strong> http://localhost:3000</div>
+                <div>🔧 <strong>Backend API:</strong> http://localhost:8000</div>
+                <div>📚 <strong>API Docs:</strong> http://localhost:8000/docs</div>
+                <div>🔑 <strong>Login:</strong> admin / secret</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; color: #6b7280;">
+            <p>Security Monitor v1.0.0</p>
+            <p style="font-size: 14px; margin-top: 8px;">
+                Komplett säkerhetslösning med real-time monitoring
+            </p>
+        </div>
+    </div>
+</body>
+</html>

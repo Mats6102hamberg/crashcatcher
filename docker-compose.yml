@@ -1,0 +1,131 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: security_monitor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - security-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:password123@db/security_monitor
+      SECRET_KEY: your-super-secret-key-change-this-in-production
+      API_KEY: superhemlig_security_watchdog_2025_key_8f9a2b4c6d1e3f7a
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - security-network
+    volumes:
+      - ./backend/app:/app/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Security Watchdog
+  watchdog:
+    build:
+      context: ./watchdog
+      dockerfile: Dockerfile
+    environment:
+      INCIDENTS_URL: http://backend:8000/incidents
+      WATCHDOG_API_KEY: superhemlig_security_watchdog_2025_key_8f9a2b4c6d1e3f7a
+      CHECK_INTERVAL_SECONDS: 20
+      API_URL: http://backend:8000
+      API_KEY: superhemlig_security_watchdog_2025_key_8f9a2b4c6d1e3f7a
+      CHECK_INTERVAL: 20
+      MAX_CPU_USAGE: 80.0
+      MAX_MEMORY_USAGE: 85.0
+      SUSPICIOUS_PROCESSES: nc,netcat,nmap,tcpdump,wireshark
+      MONITORED_PORTS: 22,80,443,3389,5432
+    depends_on:
+      - backend
+    networks:
+      - security-network
+    volumes:
+      - /var/log:/var/log:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    privileged: true
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - security-network
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/ssl/certs
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - security-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  security-network:
+    driver: bridge

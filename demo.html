@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Monitor - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #111827; }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">🛡️ Security Monitor</h1>
+            <p class="text-gray-400 text-lg">Säkerhetsövervakning och incident management</p>
+        </div>
+
+        <!-- Demo Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-red-400/10">
+                        <div class="h-6 w-6 text-red-400">⚠️</div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-400">Open Incidents</p>
+                        <p class="text-2xl font-bold text-white">3</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-yellow-400/10">
+                        <div class="h-6 w-6 text-yellow-400">⏰</div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-400">Investigating</p>
+                        <p class="text-2xl font-bold text-white">2</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-green-400/10">
+                        <div class="h-6 w-6 text-green-400">✅</div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-400">Resolved Today</p>
+                        <p class="text-2xl font-bold text-white">5</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-purple-400/10">
+                        <div class="h-6 w-6 text-purple-400">🛡️</div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-400">Critical</p>
+                        <p class="text-2xl font-bold text-white">1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-white mb-4">🚀 Projektfunktioner</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-400 mb-2">Backend (FastAPI)</h3>
+                    <ul class="text-gray-400 space-y-1">
+                        <li>• JWT Autentisering</li>
+                        <li>• PostgreSQL databas</li>
+                        <li>• Incident CRUD API</li>
+                        <li>• Log upload & analys</li>
+                        <li>• Health checks</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-400 mb-2">Frontend (React)</h3>
+                    <ul class="text-gray-400 space-y-1">
+                        <li>• Modern dashboard</li>
+                        <li>• Incident management</li>
+                        <li>• Real-time updates</li>
+                        <li>• Tailwind CSS design</li>
+                        <li>• Log file upload</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-400 mb-2">Watchdog (Python)</h3>
+                    <ul class="text-gray-400 space-y-1">
+                        <li>• System monitoring</li>
+                        <li>• Process detection</li>
+                        <li>• Network scanning</li>
+                        <li>• Log analysis</li>
+                        <li>• Auto incident creation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Instructions -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-bold text-white mb-4">🛠️ För att köra hela applikationen</h2>
+            <div class="bg-gray-900 rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-yellow-400 mb-3">Alternativ 1: Med Docker (Rekommenderat)</h3>
+                <pre class="text-green-400 text-sm bg-black rounded p-3 mb-4">
+# Installera Docker Desktop
+brew install --cask docker
+
+# Starta hela stacken
+cd /Users/admin/CrashCatcher/app-root
+docker compose up --build
+
+# Åtkomst:
+# Frontend: http://localhost:3000
+# Backend: http://localhost:8000
+# API Docs: http://localhost:8000/docs</pre>
+
+                <h3 class="text-lg font-semibold text-blue-400 mb-3">Alternativ 2: Utvecklingsläge</h3>
+                <pre class="text-green-400 text-sm bg-black rounded p-3">
+# Frontend
+cd frontend && npm install && npm start
+
+# Backend (separat terminal)
+cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
+
+# Database (lokal SQLite används automatiskt)</pre>
+            </div>
+        </div>
+
+        <!-- Demo Log Upload -->
+        <div class="bg-gray-800 rounded-lg p-6 mt-8">
+            <h2 class="text-xl font-bold text-white mb-4">📁 Demo: Log Upload</h2>
+            <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
+                <div class="text-gray-400 mb-4">☁️</div>
+                <p class="text-white mb-2"><strong>Demo log upload funktionalitet</strong></p>
+                <p class="text-sm text-gray-400 mb-4">I den riktiga appen kan du ladda upp .txt och .log filer för analys</p>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium cursor-not-allowed opacity-50">
+                    Demo Mode - Upload Disabled
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500">
+            <p>Security Monitor v1.0.0 - Säkerhetsövervakning för moderna system</p>
+            <p class="text-sm mt-2">Inloggning: admin / secret (när backend körs)</p>
+        </div>
+    </div>
+</body>
+</html>
