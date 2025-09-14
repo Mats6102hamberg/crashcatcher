@@ -1,0 +1,128 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-security_monitor}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - security-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    networks:
+      - security-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-security_monitor}
+      SECRET_KEY: ${SECRET_KEY}
+      API_KEY: ${API_KEY}
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - security-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: https://${DOMAIN}
+    depends_on:
+      - backend
+    networks:
+      - security-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Security Watchdog
+  watchdog:
+    build:
+      context: ./watchdog
+      dockerfile: Dockerfile
+    environment:
+      INCIDENTS_URL: http://backend:8000/incidents
+      WATCHDOG_API_KEY: ${API_KEY}
+      CHECK_INTERVAL_SECONDS: 30
+      API_URL: http://backend:8000
+      API_KEY: ${API_KEY}
+      MAX_CPU_USAGE: 85.0
+      MAX_MEMORY_USAGE: 90.0
+      SUSPICIOUS_PROCESSES: nc,netcat,nmap,tcpdump,wireshark,nikto,sqlmap
+      MONITORED_PORTS: 22,80,443,3389,5432,3306,1433
+    depends_on:
+      - backend
+    networks:
+      - security-network
+    volumes:
+      - /var/log:/var/log:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    privileged: true
+    restart: unless-stopped
+
+  # Caddy Reverse Proxy with automatic HTTPS
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - security-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  security-network:
+    driver: bridge

@@ -1,0 +1,46 @@
+# Automatic HTTPS with Caddy for CrashCatcher
+{$DOMAIN} {
+    # Frontend - serve React app
+    reverse_proxy frontend:3000
+
+    # Backend API routes
+    handle_path /api/* {
+        reverse_proxy backend:8000
+    }
+
+    # Health check endpoint
+    handle /health {
+        reverse_proxy backend:8000
+    }
+
+    # API documentation
+    handle /docs* {
+        reverse_proxy backend:8000
+    }
+
+    # Security headers
+    header {
+        # Security headers
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self'; frame-ancestors 'none';"
+        
+        # Remove server identification
+        -Server
+    }
+
+    # Enable compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /data/logs/access.log {
+            roll_size 100MB
+            roll_keep 10
+        }
+        format json
+    }
+}
