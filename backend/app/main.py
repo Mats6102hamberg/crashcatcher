@@ -11,6 +11,7 @@ import jwt
 import os
 import shutil
 import re
+import httpx
 
 # Skapa databastabeller
 models.Base.metadata.create_all(bind=engine)
@@ -22,9 +23,10 @@ UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # CORS middleware
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_origins=[o.strip() for o in ALLOWED_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,19 +103,40 @@ def read_incidents(limit: int = 50,
     incidents = crud.list_incidents(db, limit=limit)
     return incidents
 
+BORIS_WEBHOOK_URL = os.getenv("BORIS_WEBHOOK_URL")
+BORIS_API_KEY = os.getenv("BORIS_API_KEY", "")
+
+def forward_to_boris(incident_data: dict):
+    """Fire-and-forget: forward incident to Boris Marketing"""
+    if not BORIS_WEBHOOK_URL:
+        return
+    try:
+        httpx.post(
+            BORIS_WEBHOOK_URL,
+            json={"source": "crashcatcher", **incident_data},
+            headers={"x-api-key": BORIS_API_KEY, "Content-Type": "application/json"},
+            timeout=10,
+        )
+    except Exception as e:
+        logger.error(f"Boris webhook failed: {e}")
+
 @app.post("/incidents/", response_model=schemas.IncidentOut)
 def create_incident(incident: schemas.IncidentCreate,
                    api_key_validated: None = Depends(require_api_key),
                    db: Session = Depends(get_db)):
-    return crud.create_incident(db=db, incident=incident)
+    result = crud.create_incident(db=db, incident=incident)
+    forward_to_boris(incident.model_dump())
+    return result
 
 # Alternative endpoints without trailing slash
 @app.post("/incidents", response_model=schemas.IncidentOut)
-def create_incident_alt(inc: schemas.IncidentCreate, 
+def create_incident_alt(inc: schemas.IncidentCreate,
                        _=Depends(require_api_key)):
     db = SessionLocal()
     try:
-        return crud.create_incident(db, inc)
+        result = crud.create_incident(db, inc)
+        forward_to_boris(inc.model_dump())
+        return result
     finally:
         db.close()
 

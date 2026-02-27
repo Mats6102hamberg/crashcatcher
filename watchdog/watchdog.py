@@ -22,6 +22,14 @@ INCIDENTS_URL = os.getenv("INCIDENTS_URL", "http://backend:8000/incidents")
 API_KEY = os.getenv("WATCHDOG_API_KEY", "superhemlig_security_watchdog_2025_key_8f9a2b4c6d1e3f7a")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL_SECONDS", "20"))
 
+# External URL monitoring
+MONITORED_URLS_RAW = os.getenv("MONITORED_URLS", "")
+MONITORED_URLS = [u.strip() for u in MONITORED_URLS_RAW.split(",") if u.strip()] if MONITORED_URLS_RAW else []
+
+# Boris Marketing forwarding
+BORIS_WEBHOOK_URL = os.getenv("BORIS_WEBHOOK_URL", "")
+BORIS_API_KEY = os.getenv("BORIS_API_KEY", "")
+
 # Legacy konfiguration för bakåtkompatibilitet
 CONFIG = {
     'api_url': os.getenv('API_URL', 'http://localhost:8000'),
@@ -330,28 +338,94 @@ class SecurityWatchdog:
         
         return alerts
     
+    def check_url_health(self) -> List[Dict[str, Any]]:
+        """Kontrollera externa URLs för tillgänglighet"""
+        alerts = []
+        if not MONITORED_URLS:
+            return alerts
+
+        for url in MONITORED_URLS:
+            try:
+                start = time.time()
+                r = requests.get(url, timeout=10)
+                response_time = time.time() - start
+
+                if r.status_code >= 500:
+                    alerts.append({
+                        'title': f'URL nere: {url} (HTTP {r.status_code})',
+                        'description': f'{url} returnerade status {r.status_code}',
+                        'severity': 'CRITICAL',
+                        'incident_type': 'url_down',
+                        'target_system': url,
+                    })
+                elif r.status_code >= 400:
+                    alerts.append({
+                        'title': f'URL-fel: {url} (HTTP {r.status_code})',
+                        'description': f'{url} returnerade status {r.status_code}',
+                        'severity': 'HIGH',
+                        'incident_type': 'url_error',
+                        'target_system': url,
+                    })
+                elif response_time > 5.0:
+                    alerts.append({
+                        'title': f'Långsam respons: {url} ({response_time:.1f}s)',
+                        'description': f'{url} tog {response_time:.1f}s att svara',
+                        'severity': 'MEDIUM',
+                        'incident_type': 'slow_response',
+                        'target_system': url,
+                    })
+                else:
+                    self.logger.info(f"URL OK: {url} ({r.status_code}, {response_time:.1f}s)")
+
+            except requests.exceptions.RequestException as e:
+                alerts.append({
+                    'title': f'URL nåbar ej: {url}',
+                    'description': f'Kunde inte nå {url}: {str(e)}',
+                    'severity': 'CRITICAL',
+                    'incident_type': 'url_unreachable',
+                    'target_system': url,
+                })
+
+        return alerts
+
+    def forward_to_boris(self, alert: Dict[str, Any]):
+        """Vidarebefordra alert till Boris Marketing"""
+        if not BORIS_WEBHOOK_URL:
+            return
+        try:
+            requests.post(
+                BORIS_WEBHOOK_URL,
+                json={"source": "crashcatcher", **alert, "timestamp": datetime.now().isoformat()},
+                headers={"x-api-key": BORIS_API_KEY, "Content-Type": "application/json"},
+                timeout=10,
+            )
+        except Exception as e:
+            self.logger.error(f"Boris webhook failed: {e}")
+
     def run_checks(self):
         """Kör alla säkerhetskontroller"""
         all_alerts = []
-        
+
         self.logger.info("Kör säkerhetskontroller...")
-        
+
         # Kontrollera backend-hälsa först
         backend_healthy = self.check_backend_health()
         if not backend_healthy:
             self.logger.warning("Backend health check failed")
-        
+
         # Samla alla alerts
         all_alerts.extend(self.check_system_resources())
         all_alerts.extend(self.check_suspicious_processes())
         all_alerts.extend(self.check_network_connections())
         all_alerts.extend(self.check_login_attempts())
         all_alerts.extend(self.check_port_scans())
-        
-        # Skapa incidenter för alla alerts
+        all_alerts.extend(self.check_url_health())
+
+        # Skapa incidenter och vidarebefordra till Boris
         for alert in all_alerts:
             self.create_incident(**alert)
-        
+            self.forward_to_boris(alert)
+
         if all_alerts:
             self.logger.info(f"Skapade {len(all_alerts)} incidenter")
         else:
